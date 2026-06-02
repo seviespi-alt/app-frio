@@ -97,20 +97,7 @@ if (repuestosGuardados) {
             <h3>
               #{tienda.numero} - {tienda.nombre}
             </h3>
-<button
-  style={{
-    backgroundColor: "#6c757d",
-    color: "white",
-    border: "none",
-    padding: "6px 10px",
-    borderRadius: "8px",
-    cursor: "pointer",
-    fontSize: "13px",
-    marginTop: "8px",
-  }}
->
-  Ver historial
-</button>
+
             <p>📍 {tienda.poblacion}</p>
             <p>❄️ Gas: {tienda.gas}</p>
             <p>👨‍🔧 Técnico: {tienda.tecnico}</p>
@@ -245,7 +232,7 @@ const nuevosRepuestos = {
     ...repuestosActuales,
 {
   nombre: nuevoRepuesto,
-  estado: "Pendiente",
+  estado: "Pedido",
   pedidoPor: pedidoPor,
   instaladoPor: instaladoPor,
 },
@@ -267,12 +254,15 @@ localStorage.setItem(
 >
   Añadir repuesto
 </button>
-
+<h2 style={{ marginTop: "30px" }}>
+  📦 Pedidos
+</h2>
 {repuestos[tiendaSeleccionada.numero]
-  ?.filter(
-    (repuesto) =>
-      repuesto.estado !== "Instalado"
-  )
+  .filter(
+  (repuesto) =>
+    repuesto.estado === "Pedido" 
+  
+)
   .map((repuesto, index) => (
     <div
   key={index}
@@ -290,6 +280,54 @@ localStorage.setItem(
   Instalado por:
   {repuesto.instaladoPor || "-"}
 </p>
+<button
+  onClick={() => {
+
+    const numeroTienda =
+      tiendaSeleccionada.numero;
+
+    const nuevosRepuestos =
+      repuestos[numeroTienda].map(
+        (r) =>
+  r.nombre === repuesto.nombre
+            ? {
+                ...r,
+                estado: "Instalado",
+              }
+            : r
+      );
+
+    const repuestosActualizados = {
+      ...repuestos,
+      [numeroTienda]:
+        nuevosRepuestos,
+    };
+
+    setRepuestos(
+      repuestosActualizados
+    );
+console.log(repuestosActualizados);
+    localStorage.setItem(
+      "repuestos",
+      JSON.stringify(
+        repuestosActualizados
+      )
+    );
+  }}
+
+  style={{
+    backgroundColor: "#f0ad4e",
+    color: "white",
+    border: "none",
+    padding: "8px 12px",
+    borderRadius: "8px",
+    cursor: "pointer",
+    marginTop: "10px",
+    marginRight: "10px",
+  }}
+>
+  Instalar
+</button>
   <button
     onClick={() => {
 
@@ -333,6 +371,33 @@ localStorage.setItem(
 </div>
   )
 )}
+<h2 style={{ marginTop: "30px" }}>
+  Historial de instalados
+</h2>
+
+{repuestos[tiendaSeleccionada.numero]
+  ?.filter(
+    (repuesto) =>
+      repuesto.estado === "Instalado"
+  )
+  .map((repuesto, index) => (
+    <div
+      key={index}
+      style={cardStyle}
+    >
+      <p>{repuesto.nombre}</p>
+
+      <p>
+        Instalado por:{" "}
+        {repuesto.instaladoPor || "-"}
+      </p>
+
+      <p>
+        Pedido por:{" "}
+        {repuesto.pedidoPor}
+      </p>
+    </div>
+  ))}
       <p><strong>Nº tienda:</strong> {tiendaSeleccionada.numero}</p>
       <p><strong>Población:</strong> {tiendaSeleccionada.poblacion}</p>
       <p><strong>Gas:</strong> {tiendaSeleccionada.gas}</p>
