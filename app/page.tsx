@@ -28,7 +28,7 @@ const [registrosGas, setRegistrosGas] = useState<{
 }>({});
 const [busqueda, setBusqueda] = useState("");
 const [incidencias, setIncidencias] = useState<{
-  [key: number]: string[];
+  [key: number]: any[];
 }>({});
   useEffect(() => {
 
@@ -325,6 +325,57 @@ localStorage.setItem(
 >
   En almacén
 </button>
+<button
+  onClick={() => {
+    const nuevoNombre = prompt(
+      "Nuevo nombre del repuesto:",
+      repuesto.nombre
+    );
+
+    if (!nuevoNombre) return;
+
+    const numeroTienda =
+      tiendaSeleccionada.numero;
+
+    const nuevosRepuestos =
+      repuestos[numeroTienda].map((r) =>
+        r.nombre === repuesto.nombre
+          ? {
+              ...r,
+              nombre: nuevoNombre,
+            }
+          : r
+      );
+
+    const repuestosActualizados = {
+      ...repuestos,
+      [numeroTienda]: nuevosRepuestos,
+    };
+
+    setRepuestos(
+      repuestosActualizados
+    );
+
+    localStorage.setItem(
+      "repuestos",
+      JSON.stringify(
+        repuestosActualizados
+      )
+    );
+  }}
+  style={{
+    backgroundColor: "#007bff",
+    color: "white",
+    border: "none",
+    padding: "8px 12px",
+    borderRadius: "8px",
+    cursor: "pointer",
+    marginTop: "10px",
+    marginRight: "10px",
+  }}
+>
+  Modificar
+</button>
   <button
     onClick={() => {
 
@@ -362,7 +413,7 @@ localStorage.setItem(
       marginTop: "10px",
     }}
   >
-    Eliminar
+       Eliminar
   </button>
   
 </div>
@@ -550,6 +601,56 @@ localStorage.setItem(
     <p>{registro.cantidad} kg</p>
     <button
   onClick={() => {
+    const nuevoValor = prompt(
+      "Nueva cantidad (kg):",
+      registro.cantidad
+    );
+
+    if (!nuevoValor) return;
+
+    const numeroTienda =
+      tiendaSeleccionada.numero;
+
+    const nuevosRegistros = [
+      ...registrosGas[numeroTienda],
+    ];
+
+    nuevosRegistros[index] = {
+      ...nuevosRegistros[index],
+      cantidad: nuevoValor,
+    };
+
+    const registrosActualizados = {
+      ...registrosGas,
+      [numeroTienda]: nuevosRegistros,
+    };
+
+    setRegistrosGas(
+      registrosActualizados
+    );
+
+    localStorage.setItem(
+      "registrosGas",
+      JSON.stringify(
+        registrosActualizados
+      )
+    );
+  }}
+  style={{
+    backgroundColor: "#007bff",
+    color: "white",
+    border: "none",
+    padding: "8px 12px",
+    borderRadius: "8px",
+    cursor: "pointer",
+    marginTop: "10px",
+    marginRight: "10px",
+  }}
+>
+  Modificar
+</button>
+    <button
+  onClick={() => {
     const numeroTienda = tiendaSeleccionada.numero;
 
     const nuevosRegistros =
@@ -630,8 +731,56 @@ localStorage.setItem(
 {incidencias[tiendaSeleccionada.numero]?.map(
   (incidencia, index) => (
 <div key={index} style={cardStyle}>
-  <p>{incidencia}</p>
+  <p>{JSON.stringify(incidencia)}</p>
+<button
+  onClick={() => {
+    const nuevaDescripcion = prompt(
+      "Modificar incidencia:",
+      incidencia
+    );
 
+    if (!nuevaDescripcion) return;
+
+    const numeroTienda =
+      tiendaSeleccionada.numero;
+
+    const nuevasIncidencias = [
+      ...incidencias[numeroTienda],
+    ];
+
+    nuevasIncidencias[index] =
+      nuevaDescripcion;
+
+    const incidenciasActualizadas = {
+      ...incidencias,
+      [numeroTienda]:
+        nuevasIncidencias,
+    };
+
+    setIncidencias(
+      incidenciasActualizadas
+    );
+
+    localStorage.setItem(
+      "incidenciasPorTienda",
+      JSON.stringify(
+        incidenciasActualizadas
+      )
+    );
+  }}
+  style={{
+    backgroundColor: "#007bff",
+    color: "white",
+    border: "none",
+    padding: "8px 12px",
+    borderRadius: "8px",
+    cursor: "pointer",
+    marginTop: "10px",
+    marginRight: "10px",
+  }}
+>
+  Modificar
+</button>
   <button
     onClick={() => {
       const numeroTienda = tiendaSeleccionada.numero;
@@ -698,7 +847,11 @@ const nuevasIncidencias = {
   ...incidencias,
   [numeroTienda]: [
     ...incidenciasActuales,
-    nuevaIncidencia,
+  {
+  texto: nuevaIncidencia,
+  fecha: new Date().toLocaleString(),
+  estado: "Pendiente",
+},
   ],
 };
 
@@ -721,7 +874,7 @@ setNuevaIncidencia("");
 {incidencias[tiendaSeleccionada.numero]?.map(
   (incidencia, index) => (
     <div key={index} style={cardStyle}>
-      <p>{incidencia}</p>
+      <p>{JSON.stringify(incidencia)}</p>
 
       <button
         onClick={() => {
