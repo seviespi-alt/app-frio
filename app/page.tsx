@@ -14,6 +14,27 @@ const [tiendaSeleccionada, setTiendaSeleccionada] = useState<any>(null);
 const [nuevaIncidencia, setNuevaIncidencia] = useState("");
 const [cantidadGas, setCantidadGas] = useState("");
 const [nuevoRepuesto, setNuevoRepuesto] = useState("");
+const escucharRepuesto = () => {
+  const SpeechRecognition =
+    (window as any).SpeechRecognition ||
+    (window as any).webkitSpeechRecognition;
+
+  if (!SpeechRecognition) {
+    alert("Tu navegador no soporta reconocimiento de voz");
+    return;
+  }
+
+  const recognition = new SpeechRecognition();
+
+  recognition.lang = "es-ES";
+  recognition.start();
+
+  recognition.onresult = (event: any) => {
+    setNuevoRepuesto(
+      event.results[0][0].transcript
+    );
+  };
+};
 const [pedidoPor, setPedidoPor] = useState("");
 const [mostrarHistorial, setMostrarHistorial] =
   useState(false);
@@ -58,7 +79,47 @@ if (repuestosGuardados) {
 }, []);
   
 
+if (pantalla === "pedidosGlobales") {
+  return (
+    <main style={mainStyle}>
+      <h1>📦 Pedidos globales</h1>
 
+      {Object.entries(repuestos).map(
+  ([numeroTienda, lista]) =>
+    lista.map((repuesto, index) => (
+      <div
+        key={`${numeroTienda}-${index}`}
+        style={cardStyle}
+      >
+        <h3>{repuesto.nombre}</h3>
+
+        <p>
+          <strong>Tienda:</strong> {numeroTienda}
+        </p>
+
+        <p>
+          <strong>Estado:</strong> {repuesto.estado}
+        </p>
+
+        <p>
+          <strong>Pedido por:</strong> {repuesto.pedidoPor}
+        </p>
+
+        <p>
+          <strong>Instalado por:</strong> {repuesto.instaladoPor}
+        </p>
+      </div>
+    ))
+)}
+      <button
+        onClick={() => setPantalla("inicio")}
+        style={buttonStyle}
+      >
+        ← Volver
+      </button>
+    </main>
+  );
+}
   if (pantalla === "tiendas") {
     return (
       <main style={mainStyle}>
@@ -69,6 +130,12 @@ if (repuestosGuardados) {
   onChange={(e) => setBusqueda(e.target.value)}
   style={inputStyle}
 />
+<button
+  onClick={escucharRepuesto}
+  style={buttonStyle}
+>
+  🎤 Dictar
+</button>
         <h1>🏪 TIENDAS</h1>
 
         {tiendas
@@ -707,7 +774,11 @@ localStorage.setItem(
         ...incidencias,
         [numeroTienda]: [
           ...incidenciasActuales,
-          nuevaIncidencia,
+         {
+  texto: nuevaIncidencia,
+  fecha: new Date().toLocaleString(),
+  estado: "Pendiente",
+},
         ],
       };
 
@@ -731,12 +802,95 @@ localStorage.setItem(
 {incidencias[tiendaSeleccionada.numero]?.map(
   (incidencia, index) => (
 <div key={index} style={cardStyle}>
-  <p>{JSON.stringify(incidencia)}</p>
+<>
+  <p style={{ fontWeight: "bold" }}>
+  {typeof incidencia === "string"
+    ? incidencia
+    : incidencia.texto}
+</p>
+
+{typeof incidencia !== "string" && (
+  <>
+    <p
+      style={{
+        fontSize: "12px",
+        color: "#666",
+        marginTop: "5px",
+      }}
+    >
+      📅 {incidencia.fecha}
+    </p>
+
+    <button
+  onClick={() => {
+    const numeroTienda =
+      tiendaSeleccionada.numero;
+
+    const nuevasIncidencias = [
+      ...incidencias[numeroTienda],
+    ];
+
+    const estadoActual =
+      nuevasIncidencias[index].estado;
+
+    let nuevoEstado;
+
+    if (estadoActual === "Pendiente") {
+      nuevoEstado = "En curso";
+    } else if (
+      estadoActual === "En curso"
+    ) {
+      nuevoEstado = "Resuelta";
+    } else {
+      nuevoEstado = "Pendiente";
+    }
+
+    nuevasIncidencias[index] = {
+      ...nuevasIncidencias[index],
+      estado: nuevoEstado,
+    };
+
+    const incidenciasActualizadas = {
+      ...incidencias,
+      [numeroTienda]:
+        nuevasIncidencias,
+    };
+
+    setIncidencias(
+      incidenciasActualizadas
+    );
+
+    localStorage.setItem(
+      "incidenciasPorTienda",
+      JSON.stringify(
+        incidenciasActualizadas
+      )
+    );
+  }}
+  style={{
+    backgroundColor: "#f0f0f0",
+    border: "none",
+    borderRadius: "8px",
+    padding: "4px 8px",
+    cursor: "pointer",
+    marginBottom: "10px",
+  }}
+>
+  {incidencia.estado === "Pendiente"
+    ? "🔵 Pendiente"
+    : incidencia.estado === "En curso"
+    ? "🟡 En curso"
+    : "🟢 Resuelta"}
+</button>
+  </>
+)}
+  
+</>
 <button
   onClick={() => {
     const nuevaDescripcion = prompt(
       "Modificar incidencia:",
-      incidencia
+      incidencia.texto
     );
 
     if (!nuevaDescripcion) return;
@@ -748,8 +902,10 @@ localStorage.setItem(
       ...incidencias[numeroTienda],
     ];
 
-    nuevasIncidencias[index] =
-      nuevaDescripcion;
+    nuevasIncidencias[index] = {
+  ...nuevasIncidencias[index],
+  texto: nuevaDescripcion,
+};
 
     const incidenciasActualizadas = {
       ...incidencias,
@@ -813,11 +969,59 @@ localStorage.setItem(
 >
   ← Volver
 </button>
-
+<button
+  onClick={() => setPantalla("pedidosGlobales")}
+  style={buttonStyle}
+>
+  📦 Pedidos globales
+</button>
 </main>
 );
 }
+if (pantalla === "pedidosGlobales") {
+  return (
+    <main style={mainStyle}>
+      <h1>📦 Pedidos globales</h1>
 
+      {Object.entries(repuestos).map(
+        ([numeroTienda, lista]) =>
+          lista.map((repuesto, index) => (
+            <div
+              key={`${numeroTienda}-${index}`}
+              style={cardStyle}
+            >
+              <h3>{repuesto.nombre}</h3>
+
+              <p>
+                <strong>Tienda:</strong> {numeroTienda}
+              </p>
+
+              <p>
+                <strong>Estado:</strong> {repuesto.estado}
+              </p>
+
+              <p>
+                <strong>Pedido por:</strong>{" "}
+                {repuesto.pedidoPor}
+              </p>
+
+              <p>
+                <strong>Instalado por:</strong>{" "}
+                {repuesto.instaladoPor}
+              </p>
+            </div>
+          ))
+      )}
+
+      <button
+        onClick={() => setPantalla("inicio")}
+        style={buttonStyle}
+      >
+        Volver
+      </button>
+    </main>
+  );
+}
 if (pantalla === "detalle" && tiendaSeleccionada) {
   return (
     <main style={mainStyle}>
@@ -874,7 +1078,27 @@ setNuevaIncidencia("");
 {incidencias[tiendaSeleccionada.numero]?.map(
   (incidencia, index) => (
     <div key={index} style={cardStyle}>
-      <p>{JSON.stringify(incidencia)}</p>
+      <>
+  <h3>{incidencia.texto}</h3>
+
+  <p style={{ fontSize: "12px", color: "gray" }}>
+    📅 {incidencia.fecha}
+  </p>
+
+  <p
+    style={{
+      fontSize: "12px",
+      color:
+        incidencia.estado === "Resuelta"
+          ? "green"
+          : incidencia.estado === "En curso"
+          ? "orange"
+          : "#007bff",
+    }}
+  >
+    ● {incidencia.estado}
+  </p>
+</>
 
       <button
         onClick={() => {
@@ -923,7 +1147,12 @@ setNuevaIncidencia("");
       >
         Ver tiendas
       </button>
-      
+      <button
+  onClick={() => setPantalla("pedidosGlobales")}
+  style={buttonStyle}
+>
+  📦 Pedidos globales
+</button>
     </main>
   );
 }
