@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { tiendas } from "./data/tiendas";
-
+console.log("NUMERO DE TIENDAS:", tiendas.length);
 export default function Home() {
   const [pantalla, setPantalla] = useState("inicio");
   const [
@@ -13,7 +13,10 @@ const [tiendaSeleccionada, setTiendaSeleccionada] = useState<any>(null);
 
 const [nuevaIncidencia, setNuevaIncidencia] = useState("");
 const [cantidadGas, setCantidadGas] = useState("");
+const [codigoBotella, setCodigoBotella] = useState("");
 const [nuevoRepuesto, setNuevoRepuesto] = useState("");
+const [codigoAcceso, setCodigoAcceso] = useState("");
+const [usuarioActual, setUsuarioActual] = useState<any>(null);
 const escucharRepuesto = () => {
   const SpeechRecognition =
     (window as any).SpeechRecognition ||
@@ -35,6 +38,27 @@ const escucharRepuesto = () => {
     );
   };
 };
+const escucharIncidencia = () => {
+  const SpeechRecognition =
+    (window as any).SpeechRecognition ||
+    (window as any).webkitSpeechRecognition;
+
+  if (!SpeechRecognition) {
+    alert("Tu navegador no soporta reconocimiento de voz");
+    return;
+  }
+
+  const recognition = new SpeechRecognition();
+
+  recognition.lang = "es-ES";
+  recognition.start();
+
+  recognition.onresult = (event: any) => {
+    setNuevaIncidencia(
+      event.results[0][0].transcript
+    );
+  };
+};
 const [pedidoPor, setPedidoPor] = useState("");
 const [mostrarHistorial, setMostrarHistorial] =
   useState(false);
@@ -51,6 +75,18 @@ const [busqueda, setBusqueda] = useState("");
 const [incidencias, setIncidencias] = useState<{
   [key: number]: any[];
 }>({});
+const usuarios = [
+  {
+    codigo: "1234",
+    nombre: "José Vicente",
+    rol: "mecanico",
+  },
+  {
+    codigo: "9999",
+    nombre: "Almacen",
+    rol: "almacen",
+  },
+];
   useEffect(() => {
 
   const incidenciasGuardadas =
@@ -130,12 +166,7 @@ if (pantalla === "pedidosGlobales") {
   onChange={(e) => setBusqueda(e.target.value)}
   style={inputStyle}
 />
-<button
-  onClick={escucharRepuesto}
-  style={buttonStyle}
->
-  🎤 Dictar
-</button>
+
         <h1>🏪 TIENDAS</h1>
 
         {tiendas
@@ -623,13 +654,20 @@ localStorage.setItem(
   <option value="Negativa">Negativa</option>
   <option value="CO2">CO2</option>
 </select>
-
+<input
+  type="text"
+  placeholder="Código botella"
+  value={codigoBotella}
+  onChange={(e) => setCodigoBotella(e.target.value)}
+  style={inputStyle}
+/>
 <button
   onClick={() => {
     const nuevoRegistro = {
       fecha: new Date().toLocaleString(),
       cantidad: cantidadGas,
       tipo: tipoCentral,
+      codigoBotella: codigoBotella,
     };
 
    const numeroTienda = tiendaSeleccionada.numero;
@@ -654,6 +692,7 @@ localStorage.setItem(
 
     setCantidadGas("");
     setTipoCentral("");
+    setCodigoBotella("");
   }}
   style={buttonStyle}
 >
@@ -666,6 +705,9 @@ localStorage.setItem(
     <p>{registro.fecha}</p>
     <p>{registro.tipo}</p>
     <p>{registro.cantidad} kg</p>
+    <p>
+  <strong>Botella:</strong> {registro.codigoBotella}
+</p>
     <button
   onClick={() => {
     const nuevoValor = prompt(
@@ -760,7 +802,12 @@ localStorage.setItem(
   onChange={(e) => setNuevaIncidencia(e.target.value)}
   style={inputStyle}
 />
-
+<button
+  onClick={escucharIncidencia}
+  style={buttonStyle}
+>
+  🎤 Dictar incidencia
+</button>
 <button
   onClick={() => {
     if (nuevaIncidencia !== "") {
@@ -1131,6 +1178,40 @@ setNuevaIncidencia("");
         style={buttonStyle}
       >
         ← Volver
+      </button>
+    </main>
+  );
+}
+if (!usuarioActual) {
+  return (
+    <main style={mainStyle}>
+      <h1>🔐 Acceso</h1>
+
+      <input
+        type="password"
+        placeholder="Código de acceso"
+        value={codigoAcceso}
+        onChange={(e) =>
+          setCodigoAcceso(e.target.value)
+        }
+        style={inputStyle}
+      />
+
+      <button
+        style={buttonStyle}
+        onClick={() => {
+          const usuario = usuarios.find(
+            (u) => u.codigo === codigoAcceso
+          );
+
+          if (usuario) {
+            setUsuarioActual(usuario);
+          } else {
+            alert("Código incorrecto");
+          }
+        }}
+      >
+        Entrar
       </button>
     </main>
   );
